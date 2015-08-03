@@ -1,0 +1,24 @@
+2	Music	1	Home & Kitchen
+1	Home & Kitchen	2	Music
+3	Books	1	Home & Kitchen
+1	Home & Kitchen	3	Books
+3	Books	2	Music
+2	Music	3	Books
+3	Books	2	Music
+2	Music	3	Books
+4	Clothing & Accessories	2	Music
+2	Music	4	Clothing & Accessories
+4	Clothing & Accessories	3	Books
+3	Books	4	Clothing & Accessories
+3	Books	1	Home & Kitchen
+1	Home & Kitchen	3	Books
+7	Toys & Games	1	Home & Kitchen
+1	Home & Kitchen	7	Toys & Games
+7	Toys & Games	3	Books
+3	Books	7	Toys & Games
+8	Movies & TV	1	Home & Kitchen
+1	Home & Kitchen	8	Movies & TV
+8	Movies & TV	3	Books
+3	Books	8	Movies & TV
+8	Movies & TV	7	Toys & Games
+7	Toys & Games	8	Movies & TV

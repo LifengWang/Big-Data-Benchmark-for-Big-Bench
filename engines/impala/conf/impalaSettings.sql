@@ -1,0 +1,2 @@
+[impala]
+verbose=true
