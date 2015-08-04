@@ -58,11 +58,11 @@ query_run_main_method () {
 	if [[ -z "$DEBUG_QUERY_PART" || $DEBUG_QUERY_PART -eq 3 ]] ; then
 		echo "========================="
 		echo "$QUERY_NAME Step 3/5: Calculating k-means"
-		echo "Command "mahout kmeans -i "$TEMP_RESULT_DIR/Vec" -c "$TEMP_RESULT_DIR/init-clusters" -o "$TEMP_RESULT_DIR/kmeans-clusters" -dm org.apache.mahout.common.distance.CosineDistanceMeasure -x 10 -k 8 -ow -cl
+		echo "Command "mahout kmeans -i "$TEMP_RESULT_DIR/Vec" -c "$TEMP_RESULT_DIR/init-clusters" -o "$TEMP_RESULT_DIR/kmeans-clusters" -dm org.apache.mahout.common.distance.CosineDistanceMeasure -x 10 -k 8 -ow -cl  -xm $BIG_BENCH_ENGINE_HIVE_MAHOUT_EXECUTION
 		echo "tmp output: $TEMP_RESULT_DIR/kmeans-clusters"
 		echo "========================="
 
-		runCmdWithErrorCheck mahout kmeans --tempDir "$MAHOUT_TEMP_DIR" -i "$TEMP_RESULT_DIR/Vec" -c "$TEMP_RESULT_DIR/init-clusters" -o "$TEMP_RESULT_DIR/kmeans-clusters" -dm org.apache.mahout.common.distance.CosineDistanceMeasure -x 10 -k 8 -ow -cl
+		runCmdWithErrorCheck mahout kmeans --tempDir "$MAHOUT_TEMP_DIR" -i "$TEMP_RESULT_DIR/Vec" -c "$TEMP_RESULT_DIR/init-clusters" -o "$TEMP_RESULT_DIR/kmeans-clusters" -dm org.apache.mahout.common.distance.CosineDistanceMeasure -x 10 -k 8 -ow -cl  -xm $BIG_BENCH_ENGINE_HIVE_MAHOUT_EXECUTION
 		RETURN_CODE=$?
 		if [[ $RETURN_CODE -ne 0 ]] ;  then return $RETURN_CODE; fi
 	fi
@@ -83,7 +83,7 @@ query_run_main_method () {
 		echo "========================="
 		echo "$QUERY_NAME Step 5/5: Clean up"
 		echo "========================="
-		runCmdWithErrorCheck runEngineCmd -f "${QUERY_SQL_DIR}/cleanup.sql"
+		runCmdWithErrorCheck runEngineCmd -f "${QUERY_DIR}/cleanup.sql"
 		RETURN_CODE=$?
 		if [[ $RETURN_CODE -ne 0 ]] ;  then return $RETURN_CODE; fi
 		
@@ -94,19 +94,42 @@ query_run_main_method () {
 }
 
 query_run_clean_method () {
-	runCmdWithErrorCheck runEngineCmd -q "DROP TABLE IF EXISTS $TEMP_TABLE; DROP TABLE IF EXISTS $TEMP_RESULT_TABLE; DROP TABLE IF EXISTS $RESULT_TABLE;"
+	runCmdWithErrorCheck runEngineCmd -e "DROP TABLE IF EXISTS $TEMP_TABLE; DROP TABLE IF EXISTS $TEMP_RESULT_TABLE; DROP TABLE IF EXISTS $RESULT_TABLE;"
 	runCmdWithErrorCheck hadoop fs -rm -r -f "$HDFS_RESULT_FILE"
 	return $?
 }
 
 query_run_validate_method () {
-	VALIDATION_TEMP_FILE="`mktemp -u`"
-	runCmdWithErrorCheck hadoop fs -copyToLocal "$HDFS_RESULT_FILE" "$VALIDATION_TEMP_FILE"
-	if [ `wc -l < "$VALIDATION_TEMP_FILE"` -ge 1 ]
+	# perform exact result validation if using SF 1, else perform general sanity check
+	if [ "$BIG_BENCH_SCALE_FACTOR" -eq 1 ]
 	then
-		echo "Validation passed: Query returned results"
+		local VALIDATION_PASSED="1"
+
+		if [ ! -f "$VALIDATION_RESULTS_FILENAME" ]
+		then
+			echo "Golden result set file $VALIDATION_RESULTS_FILENAME not found"
+			VALIDATION_PASSED="0"
+		fi
+
+		if diff -q "$VALIDATION_RESULTS_FILENAME" <(hadoop fs -cat "$RESULT_DIR/*")
+		then
+			echo "Validation of $VALIDATION_RESULTS_FILENAME passed: Query returned correct results"
+		else
+			echo "Validation of $VALIDATION_RESULTS_FILENAME failed: Query returned incorrect results"
+			VALIDATION_PASSED="0"
+		fi
+		if [ "$VALIDATION_PASSED" -eq 1 ]
+		then
+			echo "Validation passed: Query results are OK"
+		else
+			echo "Validation failed: Query results are not OK"
+		fi
 	else
-		echo "Validation failed: Query did not return results"
+		if [ `hadoop fs -cat "$RESULT_DIR/*" | head -n 10 | wc -l` -ge 1 ]
+		then
+			echo "Validation passed: Query returned results"
+		else
+			echo "Validation failed: Query did not return results"
+		fi
 	fi
-	rm -rf "$VALIDATION_TEMP_FILE"
 }

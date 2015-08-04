@@ -48,8 +48,8 @@ query_run_main_method () {
 	if [[ -z "$DEBUG_QUERY_PART" || $DEBUG_QUERY_PART -eq 2 ]] ; then
 		echo "========================="
 		echo "$QUERY_NAME step 2/7: Generating sequence files"
-		echo "Used Command: "mahout seqdirectory -i "$TEMP_DIR1" -o "$SEQ_FILE_1" -ow
-		echo "Used Command: "mahout seqdirectory -i "$TEMP_DIR2" -o "$SEQ_FILE_2" -ow
+		echo 'Used Command: hadoop jar "${BIG_BENCH_QUERIES_DIR}/Resources/bigbenchqueriesmr.jar" io.bigdatabenchmark.v1.queries.q28.ToSequenceFile "${TEMP_DIR1}" "$SEQ_FILE_1"'
+		echo 'Used Command: hadoop jar "${BIG_BENCH_QUERIES_DIR}/Resources/bigbenchqueriesmr.jar" io.bigdatabenchmark.v1.queries.q28.ToSequenceFile "${TEMP_DIR2}" "$SEQ_FILE_2"'
 		echo "tmp result in: $SEQ_FILE_1"
 		echo "tmp result in: $SEQ_FILE_2"
 		echo "========================="
@@ -64,12 +64,11 @@ query_run_main_method () {
 	if [[ -z "$DEBUG_QUERY_PART" || $DEBUG_QUERY_PART -eq 3 ]] ; then
 		echo "========================="
 		echo "$QUERY_NAME step 3/7: Generating sparse vectors from sequence files"
-		echo "Used Command: "mahout seq2sparse -i "$SEQ_FILE_1" -o "$VEC_FILE_1" -ow -lnorm -nv -wt tfidf
-		echo "Used Command: "mahout seq2sparse -i "$SEQ_FILE_2" -o "$VEC_FILE_2" -seq -ow -lnorm -nv -wt tfidf
+		echo 'Used Command: mahout seq2sparse -i "$SEQ_FILE_1" -o "$VEC_FILE_1" -ow -lnorm -nv -wt tfidf'
+		echo 'Used Command: mahout seq2sparse -i "$SEQ_FILE_1" -o "$VEC_FILE_1" -ow -lnorm -nv -wt tfidf'
 		echo "tmp result in: $VEC_FILE_1" 
 		echo "tmp result in: $VEC_FILE_2"
 		echo "========================="
-		#runCmdWithErrorCheck mahout seq2sparse -i "$SEQ_FILE_2" -o "$VEC_FILE_2" -seq -ow -lnorm -nv -wt tfidf
 		runCmdWithErrorCheck mahout seq2sparse -i "$SEQ_FILE_1" -o "$VEC_FILE_1" -ow -lnorm -nv -wt tfidf
 		RETURN_CODE=$?
 		if [[ $RETURN_CODE -ne 0 ]] ;  then return $RETURN_CODE; fi
@@ -81,7 +80,7 @@ query_run_main_method () {
 	if [[ -z "$DEBUG_QUERY_PART" || $DEBUG_QUERY_PART -eq 4 ]] ; then
 		echo "========================="
 		echo "$QUERY_NAME step 4/7: Training Classifier"
-		echo "Used Command: "mahout trainnb -i "$VEC_FILE_1/tfidf-vectors" -o "$TEMP_DIR/model" -el -li "$TEMP_DIR/labelindex" -ow 
+		echo 'Used Command:  mahout trainnb --tempDir "$MAHOUT_TEMP_DIR" -i "$VEC_FILE_1/tfidf-vectors" -o "$TEMP_DIR/model" -el -li "$TEMP_DIR/labelindex" -ow'
 		echo "tmp result in: $TEMP_DIR/model"
 		echo "========================="
 		runCmdWithErrorCheck mahout trainnb --tempDir "$MAHOUT_TEMP_DIR" -i "$VEC_FILE_1/tfidf-vectors" -o "$TEMP_DIR/model" -el -li "$TEMP_DIR/labelindex" -ow
@@ -92,7 +91,7 @@ query_run_main_method () {
 	if [[ -z "$DEBUG_QUERY_PART" || $DEBUG_QUERY_PART -eq 5 ]] ; then
 		echo "========================="
 		echo "$QUERY_NAME step 5/7: Testing Classifier"
-		echo "Used Command: "mahout testnb -i "$VEC_FILE_2/tfidf-vectors" -m "$TEMP_DIR/model" -l "$TEMP_DIR/labelindex" -ow -o "$TEMP_DIR/result"
+		echo 'Used Command:  mahout testnb --tempDir "$MAHOUT_TEMP_DIR" -i "$VEC_FILE_2/tfidf-vectors" -m "$TEMP_DIR/model" -l "$TEMP_DIR/labelindex" -ow -o "$TEMP_DIR/result" '
 		echo "tmp result in: $TEMP_DIR/result"
 		echo "========================="
 
@@ -117,7 +116,7 @@ query_run_main_method () {
 		echo "========================="
 		echo "$QUERY_NAME Step 7/7: Clean up"
 		echo "========================="
-		runCmdWithErrorCheck runEngineCmd -f "${QUERY_SQL_DIR}/cleanup.sql"
+		runCmdWithErrorCheck runEngineCmd -f "${QUERY_DIR}/cleanup.sql"
 		RETURN_CODE=$?
 		if [[ $RETURN_CODE -ne 0 ]] ;  then return $RETURN_CODE; fi
 		runCmdWithErrorCheck hadoop fs -rm -r -f "$TEMP_DIR"
@@ -132,20 +131,43 @@ query_run_main_method () {
 }
 
 query_run_clean_method () {
-	runCmdWithErrorCheck runEngineCmd -q "DROP TABLE IF EXISTS $TEMP_TABLE1; DROP TABLE IF EXISTS $TEMP_TABLE2; DROP TABLE IF EXISTS $RESULT_TABLE;"
+	runCmdWithErrorCheck runEngineCmd -e "DROP TABLE IF EXISTS $TEMP_TABLE1; DROP TABLE IF EXISTS $TEMP_TABLE2; DROP TABLE IF EXISTS $RESULT_TABLE;"
 	runCmdWithErrorCheck hadoop fs -rm -r -f "$HDFS_RESULT_FILE"
 	runCmdWithErrorCheck hadoop fs -rm -r -f "$HDFS_RAW_RESULT_FILE"
 	return $?
 }
 
 query_run_validate_method () {
-	VALIDATION_TEMP_FILE="`mktemp -u`"
-	runCmdWithErrorCheck hadoop fs -copyToLocal "$HDFS_RESULT_FILE" "$VALIDATION_TEMP_FILE"
-	if [ `wc -l < "$VALIDATION_TEMP_FILE"` -ge 1 ]
+	# perform exact result validation if using SF 1, else perform general sanity check
+	if [ "$BIG_BENCH_SCALE_FACTOR" -eq 1 ]
 	then
-		echo "Validation passed: Query returned results"
+		local VALIDATION_PASSED="1"
+
+		if [ ! -f "$VALIDATION_RESULTS_FILENAME" ]
+		then
+			echo "Golden result set file $VALIDATION_RESULTS_FILENAME not found"
+			VALIDATION_PASSED="0"
+		fi
+
+		if diff -q "$VALIDATION_RESULTS_FILENAME" <(hadoop fs -cat "$RESULT_DIR/*")
+		then
+			echo "Validation of $VALIDATION_RESULTS_FILENAME passed: Query returned correct results"
+		else
+			echo "Validation of $VALIDATION_RESULTS_FILENAME failed: Query returned incorrect results"
+			VALIDATION_PASSED="0"
+		fi
+		if [ "$VALIDATION_PASSED" -eq 1 ]
+		then
+			echo "Validation passed: Query results are OK"
+		else
+			echo "Validation failed: Query results are not OK"
+		fi
 	else
-		echo "Validation failed: Query did not return results"
+		if [ `hadoop fs -cat "$RESULT_DIR/*" | head -n 10 | wc -l` -ge 1 ]
+		then
+			echo "Validation passed: Query returned results"
+		else
+			echo "Validation failed: Query did not return results"
+		fi
 	fi
-	rm -rf "$VALIDATION_TEMP_FILE"
 }

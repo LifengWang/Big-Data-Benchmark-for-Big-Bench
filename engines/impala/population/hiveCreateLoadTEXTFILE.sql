@@ -1,4 +1,32 @@
- CREATE EXTERNAL TABLE customer_demographics
+set hdfsDataPath=${env:BIG_BENCH_HDFS_ABSOLUTE_INIT_DATA_DIR};
+set fieldDelimiter=|;
+
+set customerTableName=customer;
+set customerAddressTableName=customer_address;
+set customerDemographicsTableName=customer_demographics;
+set dateTableName=date_dim;
+set householdDemographicsTableName=household_demographics;
+set incomeTableName=income_band;
+set itemTableName=item;
+set promotionTableName=promotion;
+set reasonTableName=reason;
+set shipModeTableName=ship_mode;
+set storeTableName=store;
+set timeTableName=time_dim;
+set warehouseTableName=warehouse;
+set webSiteTableName=web_site;
+set webPageTableName=web_page;
+set inventoryTableName=inventory;
+set storeSalesTableName=store_sales;
+set storeReturnsTableName=store_returns;
+set webSalesTableName=web_sales;
+set webReturnsTableName=web_returns;
+
+set marketPricesTableName=item_marketprices;
+set clickstreamsTableName=web_clickstreams;
+set reviewsTableName=product_reviews;
+
+ CREATE EXTERNAL TABLE ${hiveconf:customerDemographicsTableName}
   ( cd_demo_sk                bigint                ----not null
   , cd_gender                 string
   , cd_marital_status         string
@@ -11,12 +39,12 @@
 
   ----, primary key (cd_demo_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/customer_demographics'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:customerDemographicsTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE date_dim
+ CREATE EXTERNAL TABLE ${hiveconf:dateTableName}
   ( d_date_sk                 bigint              --not null
   , d_date_id                 string              --not null
   , d_date                    string
@@ -48,12 +76,12 @@
 
   --, primary key (d_date_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/date_dim'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:dateTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE warehouse
+ CREATE EXTERNAL TABLE ${hiveconf:warehouseTableName}
   ( w_warehouse_sk            bigint              --not null
   , w_warehouse_id            string              --not null
   , w_warehouse_name          string
@@ -71,12 +99,12 @@
 
   --, primary key (w_warehouse_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/warehouse'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:warehouseTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE ship_mode
+ CREATE EXTERNAL TABLE ${hiveconf:shipModeTableName}
   ( sm_ship_mode_sk           bigint              --not null
   , sm_ship_mode_id           string              --not null
   , sm_type                   string
@@ -86,12 +114,12 @@
 
   --, primary key (sm_ship_mode_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/ship_mode'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:shipModeTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE time_dim
+ CREATE EXTERNAL TABLE ${hiveconf:timeTableName}
   ( t_time_sk                 bigint              --not null
   , t_time_id                 string              --not null
   , t_time                    int
@@ -105,36 +133,36 @@
 
   --, primary key (t_time_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/time_dim'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:timeTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE reason
+ CREATE EXTERNAL TABLE ${hiveconf:reasonTableName}
   ( r_reason_sk               bigint              --not null
   , r_reason_id               string              --not null
   , r_reason_desc             string
 
   --, primary key (r_reason_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/reason'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:reasonTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE income_band
+ CREATE EXTERNAL TABLE ${hiveconf:incomeTableName}
   ( ib_income_band_sk         bigint              --not null
   , ib_lower_bound            int
   , ib_upper_bound            int
 
   --, primary key (ib_income_band_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/income_band'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:incomeTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE store
+ CREATE EXTERNAL TABLE ${hiveconf:storeTableName}
   ( s_store_sk                bigint              --not null
   , s_store_id                string              --not null
   , s_rec_start_date          string
@@ -167,12 +195,12 @@
 
   --, primary key (s_store_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/store'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:storeTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE web_site
+ CREATE EXTERNAL TABLE ${hiveconf:webSiteTableName}
   ( web_site_sk               bigint              --not null
   , web_site_id               string              --not null
   , web_rec_start_date        string
@@ -202,12 +230,12 @@
 
   --, primary key (web_site_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/web_site'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:webSiteTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE household_demographics
+ CREATE EXTERNAL TABLE ${hiveconf:householdDemographicsTableName}
   ( hd_demo_sk                bigint                --not null
   , hd_income_band_sk         bigint
   , hd_buy_potential          string
@@ -216,12 +244,12 @@
 
   --, primary key (hd_demo_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/household_demographics'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:householdDemographicsTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE web_page
+ CREATE EXTERNAL TABLE ${hiveconf:webPageTableName}
   ( wp_web_page_sk            bigint              --not null
   , wp_web_page_id            string              --not null
   , wp_rec_start_date         string
@@ -239,12 +267,12 @@
 
   --, primary key (wp_web_page_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/web_page'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:webPageTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE promotion
+ CREATE EXTERNAL TABLE ${hiveconf:promotionTableName}
   ( p_promo_sk                bigint              --not null
   , p_promo_id                string              --not null
   , p_start_date_sk           bigint
@@ -267,12 +295,12 @@
 
   --, primary key (p_promo_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/promotion'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:promotionTableName}'
  --distribute by replication;
 ;
 
- CREATE EXTERNAL TABLE customer
+ CREATE EXTERNAL TABLE ${hiveconf:customerTableName}
   ( c_customer_sk             bigint              --not null
   , c_customer_id             string              --not null
   , c_current_cdemo_sk        bigint
@@ -294,12 +322,12 @@
 
   --, primary key (c_customer_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/customer'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:customerTableName}'
   ----distribute by hash (c_customer_sk)
   ;
 
- CREATE EXTERNAL TABLE customer_address
+ CREATE EXTERNAL TABLE ${hiveconf:customerAddressTableName}
   ( ca_address_sk             bigint              --not null
   , ca_address_id             string              --not null
   , ca_street_number          string
@@ -316,23 +344,23 @@
 
   --, primary key (ca_address_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/customer_address'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:customerAddressTableName}'
   --distribute by hash (ca_address_sk)
   ;
 
- CREATE EXTERNAL TABLE inventory
+ CREATE EXTERNAL TABLE ${hiveconf:inventoryTableName}
   ( inv_date_sk               bigint                --not null
   , inv_item_sk               bigint                --not null
   , inv_warehouse_sk          bigint                --not null
   , inv_quantity_on_hand      int
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/inventory'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:inventoryTableName}'
   --distribute by hash (inv_item_sk);
 ;
 
- CREATE EXTERNAL TABLE item
+ CREATE EXTERNAL TABLE ${hiveconf:itemTableName}
   ( i_item_sk                 bigint              --not null
   , i_item_id                 string              --not null
   , i_rec_start_date          string
@@ -358,12 +386,12 @@
 
   --, primary key (i_item_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/item'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:itemTableName}'
   --distribute by hash (i_item_sk)
 ;
 
- CREATE EXTERNAL TABLE store_sales
+ CREATE EXTERNAL TABLE ${hiveconf:storeSalesTableName}
   ( ss_sold_date_sk           bigint
   , ss_sold_time_sk           bigint
   , ss_item_sk                bigint                --not null
@@ -388,12 +416,12 @@
   , ss_net_paid_inc_tax       double
   , ss_net_profit             double
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/store_sales'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:storeSalesTableName}'
   --distribute by hash (ss_item_sk)
 ;
 
- CREATE EXTERNAL TABLE store_returns
+ CREATE EXTERNAL TABLE ${hiveconf:storeReturnsTableName}
   ( sr_returned_date_sk       bigint
   , sr_return_time_sk         bigint
   , sr_item_sk                bigint                --not null
@@ -415,12 +443,12 @@
   , sr_store_credit           double
   , sr_net_loss               double
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/store_returns'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:storeReturnsTableName}'
   --distribute by hash (sr_item_sk)
 ;
 
- CREATE EXTERNAL TABLE web_sales
+ CREATE EXTERNAL TABLE ${hiveconf:webSalesTableName}
   ( ws_sold_date_sk           bigint
   , ws_sold_time_sk           bigint
   , ws_ship_date_sk           bigint
@@ -456,12 +484,12 @@
   , ws_net_paid_inc_ship_tax  double
   , ws_net_profit             double
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/web_sales'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:webSalesTableName}'
   --distribute by hash (ws_sk)
 ;
 
- CREATE EXTERNAL TABLE web_returns
+ CREATE EXTERNAL TABLE ${hiveconf:webReturnsTableName}
   ( wr_returned_date_sk       bigint 
   , wr_returned_time_sk       bigint
   , wr_item_sk                bigint                --not null
@@ -487,16 +515,16 @@
   , wr_account_credit         double
   , wr_net_loss               double
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/web_returns'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:webReturnsTableName}'
   --distribute by hash (wr_item_sk)
 ;
 
-DROP TABLE IF EXISTS item_marketprices;
-DROP TABLE IF EXISTS web_clickstreams;
-DROP TABLE IF EXISTS product_reviews;
+DROP TABLE IF EXISTS ${hiveconf:marketPricesTableName};
+DROP TABLE IF EXISTS ${hiveconf:clickstreamsTableName};
+DROP TABLE IF EXISTS ${hiveconf:reviewsTableName};
 
- CREATE EXTERNAL TABLE item_marketprices
+ CREATE EXTERNAL TABLE ${hiveconf:marketPricesTableName}
   ( imp_sk                  bigint                --not null
   , imp_item_sk             bigint                --not null
   , imp_competitor          string
@@ -506,12 +534,12 @@ DROP TABLE IF EXISTS product_reviews;
 
   --, primary key (imp_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/item_marketprices'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:marketPricesTableName}'
   --distribute by hash (imp_sk)
   ;
 
- CREATE EXTERNAL TABLE web_clickstreams
+ CREATE EXTERNAL TABLE ${hiveconf:clickstreamsTableName}
 (   wcs_click_date_sk       bigint
   , wcs_click_time_sk       bigint
   , wcs_sales_sk            bigint
@@ -521,12 +549,12 @@ DROP TABLE IF EXISTS product_reviews;
 
   --, primary key (wcs_click_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/web_clickstreams'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:clickstreamsTableName}'
   --distribute by hash (wcs_click_sk)
   ;
 
- CREATE EXTERNAL TABLE product_reviews
+ CREATE EXTERNAL TABLE ${hiveconf:reviewsTableName}
 (   pr_review_sk            bigint              --not null
   , pr_review_date          string
   , pr_review_time          string 
@@ -538,7 +566,7 @@ DROP TABLE IF EXISTS product_reviews;
 
   --, primary key (pr_review_sk)
   )
-  ROW FORMAT DELIMITED FIELDS TERMINATED BY '|'
-  STORED AS TEXTFILE LOCATION '/user/root/benchmarks/bigbench/data_refresh/product_reviews'
+  ROW FORMAT DELIMITED FIELDS TERMINATED BY '${hiveconf:fieldDelimiter}'
+  STORED AS TEXTFILE LOCATION '${hiveconf:hdfsDataPath}/${hiveconf:reviewsTableName}'
   --distribute by hash (pr_review_sk)
   ;

@@ -8,4 +8,4 @@
 
 -- Resources
 
-DROP TABLE IF EXISTS q26_hive_POWER_TEST_IN_PROGRESS_0_temp;
+DROP TABLE IF EXISTS ${hiveconf:TEMP_TABLE};

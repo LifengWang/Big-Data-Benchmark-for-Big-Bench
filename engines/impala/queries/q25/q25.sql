@@ -21,7 +21,7 @@ CREATE TABLE ${hiveconf:TEMP_TABLE} (
   cid     BIGINT,
   oid     BIGINT,
   dateid  BIGINT,
-  amount  DOUBLE
+  amount  decimal(38,2)
 );
 
 INSERT INTO TABLE ${hiveconf:TEMP_TABLE}
@@ -70,7 +70,7 @@ CREATE TABLE ${hiveconf:TEMP_RESULT_TABLE} (
   cid        BIGINT,
   recency    DECIMAL(2,1),
   frequency  BIGINT,
-  totalspend DOUBLE)
+  totalspend DECIMAL(38,2))
 ROW FORMAT DELIMITED FIELDS TERMINATED BY ' ' LINES TERMINATED BY '\n'
 STORED AS TEXTFILE LOCATION '${hiveconf:TEMP_RESULT_DIR}';
 
