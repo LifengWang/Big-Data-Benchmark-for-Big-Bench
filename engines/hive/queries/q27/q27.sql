@@ -1,5 +1,5 @@
 --"INTEL CONFIDENTIAL"
---Copyright 2015  Intel Corporation All Rights Reserved.
+--Copyright 2016 Intel Corporation All Rights Reserved.
 --
 --The source code contained or described herein and all documents related to the source code ("Material") are owned by Intel Corporation or its suppliers or licensors. Title to the Material remains with Intel Corporation or its suppliers and licensors. The Material contains trade secrets and proprietary and confidential information of Intel or its suppliers and licensors. The Material is protected by worldwide copyright and trade secret laws and treaty provisions. No part of the Material may be used, copied, reproduced, modified, published, uploaded, posted, transmitted, distributed, or disclosed in any way without Intel's prior express written permission.
 --
@@ -11,22 +11,30 @@
 
 -- Resources
 ADD JAR ${env:BIG_BENCH_QUERIES_DIR}/Resources/opennlp-maxent-3.0.3.jar;
-ADD JAR ${env:BIG_BENCH_QUERIES_DIR}/Resources/opennlp-tools-1.5.3.jar;
+ADD JAR ${env:BIG_BENCH_QUERIES_DIR}/Resources/opennlp-tools-1.6.0.jar;
 ADD JAR ${env:BIG_BENCH_QUERIES_DIR}/Resources/bigbenchqueriesmr.jar;
 CREATE TEMPORARY FUNCTION find_company AS 'io.bigdatabenchmark.v1.queries.q27.CompanyUDF';
 
--- !echo Extract competitor product names and model names (if any) from online product reviews for a given product: (item_sk: '${hiveconf:q27_pr_item_sk}');
 
 --Result  --------------------------------------------------------------------
 --keep result human readable
 set hive.exec.compress.output=false;
 set hive.exec.compress.output;
 
+-- This query requires parallel orderby for fast and deterministic global ordering of final result
+set hive.optimize.sampling.orderby=${hiveconf:bigbench.hive.optimize.sampling.orderby};
+set hive.optimize.sampling.orderby.number=${hiveconf:bigbench.hive.optimize.sampling.orderby.number};
+set hive.optimize.sampling.orderby.percent=${hiveconf:bigbench.hive.optimize.sampling.orderby.percent};
+--debug print
+set hive.optimize.sampling.orderby;
+set hive.optimize.sampling.orderby.number;
+set hive.optimize.sampling.orderby.percent;
+
 --CREATE RESULT TABLE. Store query result externally in output_dir/qXXresult/
 DROP TABLE IF EXISTS ${hiveconf:RESULT_TABLE};
 CREATE TABLE ${hiveconf:RESULT_TABLE} (
-  pr_review_sk    BIGINT,
-  pr_item_sk      BIGINT,
+  review_sk       BIGINT,
+  item_sk         BIGINT,
   company_name    STRING,
   review_sentence STRING
 )
@@ -35,14 +43,17 @@ STORED AS ${env:BIG_BENCH_hive_default_fileformat_result_table} LOCATION '${hive
 
 -- the real query part
 INSERT INTO TABLE ${hiveconf:RESULT_TABLE}
-SELECT pr_review_sk, pr_item_sk, company_name, review_sentence
-FROM (
-  SELECT find_company(pr_review_sk, pr_item_sk, pr_review_content) AS (pr_review_sk, pr_item_sk, company_name, review_sentence)
+SELECT review_sk, item_sk, company_name, review_sentence
+FROM ( --wrap in additional FROM(), because sorting/distribute by with UDTF in select clause is not allowed
+  -- find_company() searches for competitor products in the reviews of q27_pr_item_sk
+  SELECT find_company(pr_review_sk, pr_item_sk, pr_review_content) AS (review_sk, item_sk, company_name, review_sentence)
   FROM (
     SELECT pr_review_sk, pr_item_sk, pr_review_content
     FROM product_reviews
     WHERE pr_item_sk = ${hiveconf:q27_pr_item_sk}
   ) subtable
-)extracted
-CLUSTER BY  pr_review_sk, company_name
+) extracted
+ORDER BY review_sk, item_sk, company_name, review_sentence
+--CLUSTER BY instead of ORDER BY does not work to achieve global ordering. e.g. 2 reducers: first reducer will write keys 0,2,4,6.. into file 000000_0 and reducer 2 will write keys 1,3,5,7,.. into file 000000_1.concatenating these files does not produces a deterministic result if number of reducer changes.
+--Solution: parallel "order by" as non parallel version only uses a single reducer and we cant use "limit"
 ;

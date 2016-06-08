@@ -1,3 +1,10 @@
+--"INTEL CONFIDENTIAL"
+--Copyright 2016 Intel Corporation All Rights Reserved.
+--
+--The source code contained or described herein and all documents related to the source code ("Material") are owned by Intel Corporation or its suppliers or licensors. Title to the Material remains with Intel Corporation or its suppliers and licensors. The Material contains trade secrets and proprietary and confidential information of Intel or its suppliers and licensors. The Material is protected by worldwide copyright and trade secret laws and treaty provisions. No part of the Material may be used, copied, reproduced, modified, published, uploaded, posted, transmitted, distributed, or disclosed in any way without Intel's prior express written permission.
+--
+--No license under any patent, copyright, trade secret or other intellectual property right is granted to or conferred upon you by disclosure or delivery of the Materials, either expressly, by implication, inducement, estoppel or otherwise. Any license under such intellectual property rights must be express and approved by Intel in writing.
+
 -- !echo ============================;
 -- !echo <settings from queryParameters.sql>;
 -- !echo ============================;
@@ -42,11 +49,11 @@ set q02_session_timeout_inSec=3600;
 
 
 -------- Q03 -----------
-set q03_days_before_purchase=10;
+set q03_days_in_sec_before_purchase=864000;
 set q03_views_before_purchase=5;
-set q03_purchased_item_IN=10000;
+set q03_purchased_item_IN=10001;
 --see q1 for categories
-set q03_purchased_item_category_IN=2,3; 
+set q03_purchased_item_category_IN=2,3;
 set q03_limit=30;
 
 -------- Q04 -----------
@@ -60,7 +67,7 @@ set q05_cd_gender='M';
 
 -------- Q06 -----------
 SET q06_LIMIT=100;
---web_sales and store_sales date 
+--web_sales and store_sales date
 SET q06_YEAR=2001; 
 
 
@@ -70,15 +77,15 @@ SET q07_HIGHER_PRICE_RATIO=1.2;
 SET q07_YEAR=2004;
 SET q07_MONTH=7;
 SET q07_HAVING_COUNT_GE=10;
-SET q07_LIMIT=100;
+SET q07_LIMIT=10;
 
 -------- Q08 -----------
-set q08_category=review;
 -- web_clickstreams date range
 set q08_startDate=2001-09-02;
 -- + 1year
 set q08_endDate=2002-09-02;
-set q08_days_before_purchase=1;
+-- 3 days in sec = 3*24*60*60
+set q08_seconds_before_purchase=259200;
 
 
 -------- Q09 -----------
@@ -119,9 +126,9 @@ set q09_part3_sales_price_max=200;
 --web_sales date range
 set q11_startDate=2003-01-02;
 -- +30days
-set q11_endDate=2003-02-02; 
-	
-	
+set q11_endDate=2003-02-02;
+
+
 -------- Q12 -----------
 --web_clickstreams start_date - endDate1
 --store_sales      start_date - endDate2
@@ -131,8 +138,8 @@ set q12_endDate2=2001-12-02;
 set q12_i_category_IN='Books', 'Electronics';
 
 -------- Q13 -----------
---store_sales date 
-set q13_Year=2001; 
+--store_sales date
+set q13_Year=2001;
 
 set q13_limit=100;
 
@@ -160,7 +167,7 @@ set q16_date=2001-03-16;
 -------- Q17 -----------
 set q17_gmt_offset=-5;
 --store_sales date
-set q17_year=2001; 
+set q17_year=2001;
 set q17_month=12;
 set q17_i_category_IN='Books', 'Music';
 
@@ -197,10 +204,10 @@ set q22_i_current_price_max=1.5;
 --inventory date
 set q23_year=2001;
 set q23_month=1;
-set q23_coeficient=1.5;
+set q23_coefficient=1.3;
 
 -------- Q24 -----------
-set q24_i_item_sk_IN=10000, 10001;
+set q24_i_item_sk=10000;
 
 -------- Q25 -----------
 -- store_sales and web_sales date

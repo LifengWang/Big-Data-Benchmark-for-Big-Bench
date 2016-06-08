@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #"INTEL CONFIDENTIAL"
-#Copyright 2015  Intel Corporation All Rights Reserved. 
+#Copyright 2016 Intel Corporation All Rights Reserved.
 #
 #The source code contained or described herein and all documents related to the source code ("Material") are owned by Intel Corporation or its suppliers or licensors. Title to the Material remains with Intel Corporation or its suppliers and licensors. The Material contains trade secrets and proprietary and confidential information of Intel or its suppliers and licensors. The Material is protected by worldwide copyright and trade secret laws and treaty provisions. No part of the Material may be used, copied, reproduced, modified, published, uploaded, posted, transmitted, distributed, or disclosed in any way without Intel's prior express written permission.
 #
@@ -37,6 +37,7 @@ query_run_validate_method () {
 			VALIDATION_PASSED="0"
 		fi
 
+		#echo "validating hdfs result $RESULT_DIR/* against $VALIDATION_RESULTS_FILENAME . diff -q \"$VALIDATION_RESULTS_FILENAME\" <(hadoop fs -cat \"$RESULT_DIR/*\""
 		if diff -q "$VALIDATION_RESULTS_FILENAME" <(hadoop fs -cat "$RESULT_DIR/*")
 		then
 			echo "Validation of $VALIDATION_RESULTS_FILENAME passed: Query returned correct results"
@@ -49,13 +50,15 @@ query_run_validate_method () {
 			echo "Validation passed: Query results are OK"
 		else
 			echo "Validation failed: Query results are not OK"
+			return 1
 		fi
 	else
-		if [ `hadoop fs -cat "$RESULT_DIR/*" | head -n 10 | wc -l` -eq 1 ]
+		if [ `hadoop fs -cat "$RESULT_DIR/*" | head -n 10 | wc -l` -ge 1 ]
 		then
 			echo "Validation passed: Query returned results"
 		else
 			echo "Validation failed: Query did not return results"
+			return 1
 		fi
 	fi
 }

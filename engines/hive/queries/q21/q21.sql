@@ -1,17 +1,17 @@
 --"INTEL CONFIDENTIAL"
---Copyright 2015  Intel Corporation All Rights Reserved.
+--Copyright 2016 Intel Corporation All Rights Reserved.
 --
 --The source code contained or described herein and all documents related to the source code ("Material") are owned by Intel Corporation or its suppliers or licensors. Title to the Material remains with Intel Corporation or its suppliers and licensors. The Material contains trade secrets and proprietary and confidential information of Intel or its suppliers and licensors. The Material is protected by worldwide copyright and trade secret laws and treaty provisions. No part of the Material may be used, copied, reproduced, modified, published, uploaded, posted, transmitted, distributed, or disclosed in any way without Intel's prior express written permission.
 --
 --No license under any patent, copyright, trade secret or other intellectual property right is granted to or conferred upon you by disclosure or delivery of the Materials, either expressly, by implication, inducement, estoppel or otherwise. Any license under such intellectual property rights must be express and approved by Intel in writing.
 
---based on tpc-ds q29
---Get all items that were sold in stores in a given month
---and year and which were returned in the next 6 months and re-purchased by
---the returning customer afterwards through the web sales channel in the following
---three years. For those these items, compute the total quantity sold through the
---store, the quantity returned and the quantity purchased through the web. Group
---this information by item and store.
+-- based on tpc-ds q29
+-- Get all items that were sold in stores in a given month
+-- and year and which were returned in the next 6 months and re-purchased by
+-- the returning customer afterwards through the web sales channel in the following
+-- three years. For those items, compute the total quantity sold through the
+-- store, the quantity returned and the quantity purchased through the web. Group
+-- this information by item and store.
 
 
 --Result --------------------------------------------------------------------
@@ -35,48 +35,73 @@ STORED AS ${env:BIG_BENCH_hive_default_fileformat_result_table} LOCATION '${hive
 
 -- the real query part
 INSERT INTO TABLE ${hiveconf:RESULT_TABLE}
-select   
-     i_item_id
-    ,i_item_desc
-    ,s_store_id
-    ,s_store_name
-    ,sum(ss_quantity)        as store_sales_quantity
-    ,sum(sr_return_quantity) as store_returns_quantity
-    ,sum(ws_quantity)        as web_sales_quantity
- from
-    store_sales
-   ,store_returns
-   ,web_sales
-   ,date_dim             d1
-   ,date_dim             d2
-   ,date_dim             d3
-   ,store
-   ,item
- where   d1.d_year          = ${hiveconf:q21_year} --sold in stores in a given month and year
- and    d1.d_moy            = ${hiveconf:q21_month}
- and d1.d_date_sk           = ss_sold_date_sk
- and i_item_sk              = ss_item_sk
- and s_store_sk             = ss_store_sk
- and ss_customer_sk         = sr_customer_sk
- and ss_item_sk             = sr_item_sk
- and ss_ticket_number       = sr_ticket_number
- and sr_returned_date_sk    = d2.d_date_sk
- and d2.d_moy               between ${hiveconf:q21_month} and  ${hiveconf:q21_month} + 6 --which were returned in the next six months 
- and d2.d_year              = ${hiveconf:q21_year}
- and sr_customer_sk         = ws_bill_customer_sk --re-purchased by the returning customer afterwards through the web sales channel
- and sr_item_sk             = ws_item_sk
- and ws_sold_date_sk        = d3.d_date_sk     
- and d3.d_year              between ${hiveconf:q21_year} and ${hiveconf:q21_year} + 2 -- in the following three years (re-purchased by the returning customer afterwards through the web sales channel) 
- group by
-    i_item_id
-   ,i_item_desc
-   ,s_store_id
-   ,s_store_name
- order by
-    i_item_id 
-   ,i_item_desc
-   ,s_store_id
-   ,s_store_name
- limit ${hiveconf:q21_limit};
-
-
+SELECT
+  part_i.i_item_id AS i_item_id,
+  part_i.i_item_desc AS i_item_desc,
+  part_s.s_store_id AS s_store_id,
+  part_s.s_store_name AS s_store_name,
+  SUM(part_ss.ss_quantity) AS store_sales_quantity,
+  SUM(part_sr.sr_return_quantity) AS store_returns_quantity,
+  SUM(part_ws.ws_quantity) AS web_sales_quantity
+FROM (
+	SELECT
+	  sr_item_sk,
+	  sr_customer_sk,
+	  sr_ticket_number,
+	  sr_return_quantity
+	FROM
+	  store_returns sr,
+	  date_dim d2
+	WHERE d2.d_year = ${hiveconf:q21_year}
+	AND d2.d_moy BETWEEN ${hiveconf:q21_month} AND ${hiveconf:q21_month} + 6 --which were returned in the next six months
+ 	AND sr.sr_returned_date_sk = d2.d_date_sk
+) part_sr
+INNER JOIN (
+  SELECT
+    ws_item_sk,
+    ws_bill_customer_sk,
+    ws_quantity
+  FROM
+    web_sales ws,
+    date_dim d3
+  WHERE d3.d_year BETWEEN ${hiveconf:q21_year} AND ${hiveconf:q21_year} + 2 -- in the following three years (re-purchased by the returning customer afterwards through the web sales channel)
+  AND ws.ws_sold_date_sk = d3.d_date_sk
+) part_ws ON (
+  part_sr.sr_item_sk = part_ws.ws_item_sk
+  AND part_sr.sr_customer_sk = part_ws.ws_bill_customer_sk
+)
+INNER JOIN (
+  SELECT
+    ss_item_sk,
+    ss_store_sk,
+    ss_customer_sk,
+    ss_ticket_number,
+    ss_quantity
+  FROM
+    store_sales ss,
+    date_dim d1
+  WHERE d1.d_year = ${hiveconf:q21_year}
+  AND d1.d_moy = ${hiveconf:q21_month}
+  AND ss.ss_sold_date_sk = d1.d_date_sk
+) part_ss ON (
+  part_ss.ss_ticket_number = part_sr.sr_ticket_number
+  AND part_ss.ss_item_sk = part_sr.sr_item_sk
+  AND part_ss.ss_customer_sk = part_sr.sr_customer_sk
+)
+INNER JOIN store part_s ON (
+  part_s.s_store_sk = part_ss.ss_store_sk
+)
+INNER JOIN item part_i ON (
+  part_i.i_item_sk = part_ss.ss_item_sk
+)
+GROUP BY
+  part_i.i_item_id,
+  part_i.i_item_desc,
+  part_s.s_store_id,
+  part_s.s_store_name
+ORDER BY
+  part_i.i_item_id,
+  part_i.i_item_desc,
+  part_s.s_store_id,
+  part_s.s_store_name
+LIMIT ${hiveconf:q21_limit};

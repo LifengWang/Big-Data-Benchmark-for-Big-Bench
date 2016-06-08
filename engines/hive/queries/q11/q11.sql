@@ -1,13 +1,14 @@
 --"INTEL CONFIDENTIAL"
---Copyright 2015  Intel Corporation All Rights Reserved.
+--Copyright 2016 Intel Corporation All Rights Reserved.
 --
 --The source code contained or described herein and all documents related to the source code ("Material") are owned by Intel Corporation or its suppliers or licensors. Title to the Material remains with Intel Corporation or its suppliers and licensors. The Material contains trade secrets and proprietary and confidential information of Intel or its suppliers and licensors. The Material is protected by worldwide copyright and trade secret laws and treaty provisions. No part of the Material may be used, copied, reproduced, modified, published, uploaded, posted, transmitted, distributed, or disclosed in any way without Intel's prior express written permission.
 --
 --No license under any patent, copyright, trade secret or other intellectual property right is granted to or conferred upon you by disclosure or delivery of the Materials, either expressly, by implication, inducement, estoppel or otherwise. Any license under such intellectual property rights must be express and approved by Intel in writing.
 
 
---For a given product, measure the correlation of sentiments, including
---the number of reviews and average review ratings, on product monthly revenues.
+-- For a given product, measure the correlation of sentiments, including
+-- the number of reviews and average review ratings, on product monthly revenues
+-- within a given time frame.
 
 -- Resources
 
@@ -38,7 +39,7 @@ FROM (
       count(*) AS r_count,
       avg(pr_review_rating) AS avg_rating
     FROM product_reviews
-    WHERE pr_item_sk IS NOT null
+    WHERE pr_item_sk IS NOT NULL
     --this is GROUP BY 1 in original::same as pr_item_sk here::hive complains anyhow
     GROUP BY pr_item_sk
   ) p
@@ -53,13 +54,14 @@ FROM (
       FROM date_dim d
       WHERE d.d_date >= '${hiveconf:q11_startDate}'
       AND   d.d_date <= '${hiveconf:q11_endDate}'
-    ) dd on ( ws.ws_sold_date_sk=dd.d_date_sk )
+    ) dd ON ( ws.ws_sold_date_sk = dd.d_date_sk )
     WHERE ws_item_sk IS NOT null
     --this is GROUP BY 1 in original::same as ws_item_sk here::hive complains anyhow
     GROUP BY ws_item_sk
   ) s
   ON p.pr_item_sk = s.ws_item_sk
 ) q11_review_stats
+--no sorting required, output is a single line
 ;
 
 -- cleanup -------------------------------------------------------------

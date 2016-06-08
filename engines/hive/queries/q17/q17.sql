@@ -1,20 +1,17 @@
 --"INTEL CONFIDENTIAL"
---Copyright 2015  Intel Corporation All Rights Reserved.
+--Copyright 2016 Intel Corporation All Rights Reserved.
 --
 --The source code contained or described herein and all documents related to the source code ("Material") are owned by Intel Corporation or its suppliers or licensors. Title to the Material remains with Intel Corporation or its suppliers and licensors. The Material contains trade secrets and proprietary and confidential information of Intel or its suppliers and licensors. The Material is protected by worldwide copyright and trade secret laws and treaty provisions. No part of the Material may be used, copied, reproduced, modified, published, uploaded, posted, transmitted, distributed, or disclosed in any way without Intel's prior express written permission.
 --
 --No license under any patent, copyright, trade secret or other intellectual property right is granted to or conferred upon you by disclosure or delivery of the Materials, either expressly, by implication, inducement, estoppel or otherwise. Any license under such intellectual property rights must be express and approved by Intel in writing.
 
---based on tpc-ds q61
---Find the ratio of items sold with and without promotions
---in a given month and year. Only items in certain categories sold to customers
---living in a specific time zone are considered.
+-- based on tpc-ds q61
+-- Find the ratio of items sold with and without promotions
+-- in a given month and year. Only items in certain categories sold to customers
+-- living in a specific time zone are considered.
 
 -- Resources
 
-
-
---TODO Empty result - needs more testing
 
 --Result  --------------------------------------------------------------------
 --keep result human readable
@@ -32,7 +29,7 @@ STORED AS ${env:BIG_BENCH_hive_default_fileformat_result_table} LOCATION '${hive
 
 -- the real query part
 INSERT INTO TABLE ${hiveconf:RESULT_TABLE}
---no need to cast promotions or total to double : SUM(COL) already returned a DOUBLE
+-- no need to cast promotions or total to double: SUM(COL) already returned a DOUBLE
 SELECT promotions, total, promotions / total * 100
 FROM (
   SELECT SUM(ss_ext_sales_price) promotions
@@ -66,7 +63,6 @@ JOIN (
   AND d_moy = ${hiveconf:q17_month}
 ) all_sales
 -- we don't need a 'ON' join condition. result is just two numbers.
---original was ORDER BY  promotions, total , but CLUSTER BY is hives cluster scale counter part
-CLUSTER BY promotions, total
+ORDER BY promotions, total
 LIMIT 100 -- kinda useless, result is one line with two numbers, but original tpc-ds query has it too.
 ;
